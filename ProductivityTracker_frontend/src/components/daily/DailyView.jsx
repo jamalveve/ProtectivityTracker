@@ -4,6 +4,8 @@ import MiniCalendar from "./MiniCalendar";
 import TaskChecklist from "./TaskChecklist";
 import ScheduleCalendar from "./ScheduleCalendar";
 
+import { createTask } from "../../services/taskService";
+
 function DailyView({
   events,
   setEvents,
@@ -14,65 +16,72 @@ function DailyView({
   otherTasks,
   setOtherTasks,
 }) {
-  
 
+  async function addSport() {
+    const title = window.prompt("Enter activity name:");
 
+    if (!title?.trim()) return;
 
+    const activityTime = window.prompt(
+      "Enter start time (24-hour format, 08:00 to 19:59):"
+    );
 
-function addSport() {
-  const title = window.prompt("Enter activity name:");
-  if (!title?.trim()) return;
+    if (!activityTime) return;
 
-  const activityTime = window.prompt(
-    "Enter start time (24-hour format, 08:00 to 19:59):"
-  );
+    const timeMatch = activityTime.match(
+      /^([01]\d|2[0-3]):([0-5]\d)$/
+    );
 
-  if (!activityTime) return;
+    if (!timeMatch) {
+      alert("Enter time in HH:MM format, for example 08:30 or 17:45.");
+      return;
+    }
 
-  const timeMatch = activityTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    const [hours, minutes] = activityTime.split(":").map(Number);
+    const startMinutes = hours * 60 + minutes;
 
-  if (!timeMatch) {
-    alert("Enter time in HH:MM format, for example 08:30 or 17:45.");
-    return;
+    if (startMinutes < 8 * 60 || startMinutes >= 20 * 60) {
+      alert("Activities can only be scheduled between 8:00 AM and 8:00 PM.");
+      return;
+    }
+
+    const formattedTime = new Date(2000, 0, 1, hours, minutes)
+      .toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0");
+
+    const dateKey = `${year}-${month}-${day}`;
+
+    try {
+      const savedTask = await createTask({
+        title: title.trim(),
+        activityDate: dateKey,
+        startMinutes: startMinutes,
+        hours: formattedTime,
+        color: "purple",
+      });
+
+      setEvents((previous) => [
+        ...previous,
+        {
+          ...savedTask,
+          date: savedTask.activityDate,
+        },
+      ]);
+
+      alert("Activity saved successfully!");
+
+    } catch (error) {
+      console.error("Error saving activity:", error);
+      alert("Could not save activity. Please check your backend.");
+    }
   }
-
-  const [hours, minutes] = activityTime.split(":").map(Number);
-  const startMinutes = hours * 60 + minutes;
-
-  if (startMinutes < 8 * 60 || startMinutes >= 20 * 60) {
-    alert("Activities can only be scheduled between 8:00 AM and 8:00 PM.");
-    return;
-  }
-
-  const formattedTime = new Date(2000, 0, 1, hours, minutes)
-    .toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-  const year = selectedDate.getFullYear();
-  const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-  const day = String(selectedDate.getDate()).padStart(2, "0");
-
-  const dateKey = `${year}-${month}-${day}`;
-
-  setEvents((previous) => [
-    ...previous,
-    {
-      id: Date.now(),
-      date: dateKey,
-      startMinutes,
-      title: title.trim(),
-      hours: formattedTime,
-      color: "purple",
-    },
-  ]);
-}
-
-
-
-
 
   function addTask() {
     const title = window.prompt("Enter a new task:");

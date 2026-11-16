@@ -442,7 +442,7 @@
 
 
 
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import "./App.css";
 
 import Sidebar from "./components/sidebar";
@@ -451,7 +451,7 @@ import ThemeSwitch from "./components/ThemeSwitch";
 
 import DailyView from "./components/daily/DailyView";
 import EmptyPeriodView from "./components/common/EmptyPeriodView";
-
+import { getTasks } from "./services/taskService";
 import {
   initialEvents,
   initialMyTasks,
@@ -470,6 +470,25 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [myTasks, setMyTasks] = useState(initialMyTasks);
   const [otherTasks, setOtherTasks] = useState(initialOtherTasks);
+
+    // Load saved events from MySQL when the app opens
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        const savedTasks = await getTasks();
+        setEvents(
+  savedTasks.map((task) => ({
+    ...task,
+    date: task.activityDate,
+  }))
+);
+      } catch (error) {
+        console.error("Error loading tasks:", error);
+      }
+    }
+
+    loadTasks();
+  }, []);
 
   return (
     <div className={`page ${theme === "Dark" ? "dark" : ""}`}>

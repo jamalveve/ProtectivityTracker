@@ -81,8 +81,8 @@ function ScheduleCalendar({ events, selectedDate, setSelectedDate }) {
                   {events
                     .filter(
                       (event) =>
-                        event.date === dateKey &&
-                        Math.floor(event.startMinutes / 60) === hour
+                        (event.activityDate || event.date) === dateKey &&
+Math.floor(event.startMinutes / 60) === hour
                     )
                     .map((event) => (
                       <div
